@@ -98,13 +98,12 @@ router.put("/updatebulk/:id", fetchuser, async (req, res) => {
     res.json({ bulk });
   } catch (error) {
     console.error(error.message);
-    res.status(500).send("internal server error");
+    res.status(500).send("internal server error"+error.message);
   }
 });
 
 // Delete a bulk
 router.delete("/detelebulk/:id", fetchuser, async (req, res) => {
-  const { number, message, contact, file } = req.body;
   try {
     let bulk = await Bulk.findById(req.params.id);
     if (!bulk) {
