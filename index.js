@@ -6,11 +6,15 @@ const fileupload= require("express-fileupload")
 connectToMongo();
 const app = express();
 const port = process.env.PORT || 4000;
-app.use(fileupload({
+app.use(fileupload({ 
   useTempFiles:true
 }))
 app.use(cors());
 app.use(express.json());
+app.use(express.static("pulic"))
+app.use(express.urlencoded({extended:true,limit:"16kb"}))
+
+
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/bulk", require("./routes/bulk"));
 app.listen(port, () => {
