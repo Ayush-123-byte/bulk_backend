@@ -1,19 +1,19 @@
-const connectToMongo = require("./db");
+require("dotenv").config();
 const express = require("express");
+const connectToMongo = require("./db/db");
 var cors = require("cors");
-const fileupload= require("express-fileupload")
+const cookieParser =require("cookie-parser");
 
 connectToMongo();
 const app = express();
 const port = process.env.PORT || 4000;
-app.use(fileupload({ 
-  useTempFiles:true
-}))
 app.use(cors());
 app.use(express.json());
-app.use(express.static("pulic"))
-app.use(express.urlencoded({extended:true,limit:"16kb"}))
 
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(express.static("pulic"));
+app.use(cookieParser());
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/bulk", require("./routes/bulk"));

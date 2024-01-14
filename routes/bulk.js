@@ -1,33 +1,10 @@
 const express = require("express");
 const Bulk = require("../models/Bulk");
-const multer = require("multer");
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
 var fetchuser = require("../middleWare/fetchuser");
-const cloudinary = require("cloudinary").v2;
-const fs = require("fs");
-
-cloudinary.config({
-  cloud_name: "dzyf83dzu",
-  api_key: "399542719614922",
-  api_secret: "qlku--3njYzuBgNcwiKp9FwxFOY",
-});
-
-// const upload = multer({
-//   storage: multer.diskStorage({
-//     destination: function (req, file, cb) {
-//       cb(null, "uploads");
-//     },
-//     filename: function (req, file, cb) {
-//       cb(null, file.fieldname + "-" + Date.now());
-//     },
-//   }),
-// }).single("user_file");
-
-// router.post("/upload", upload, (req, res) => {
-//   res.send("file uploaded");
-// });
-
+const upload = require("../middleWare/multer");
+const uploadOnCloudinary = require("../utils/cloudinary");
 // Get all bulk
 router.get("/fetchbulk", fetchuser, async (req, res) => {
   try {
@@ -43,39 +20,43 @@ router.get("/fetchbulk", fetchuser, async (req, res) => {
 router.post(
   "/createbulk",
   fetchuser,
+  upload.fields([{ name: "file", maxCount: 1 }]),
   [
-    body("number").isLength({ min: 5 }),
-    body("message").isLength({ min: 5 }),
-    body("contact").isLength({ min: 5 }),
+    body("number", "number expected of 5 digit").isLength({ min: 5 }),
+    body("message", "invalid message").isLength({ min: 5 }),
+    body("contact", "give right contact").isLength({ min: 5 }),
+    // body("file", "give right file").exists(),
   ],
   async (req, res) => {
-    const { number, message, contact } = req.body;
+    // if there are error , return Bad request and the errors
+    const error = validationResult(req);
+    if (!error.isEmpty()) {
+      return res.status(400).json({ error: error.array() });
+    }
     try {
-      // if there are error , return Bad request and the errors
-      const error = validationResult(req);
-      if (!error.isEmpty()) {
-        return res.status(400).json({ error: error.array() });
+      const fileLocalPath = req.files?.file[0]?.path;
+
+      if (!fileLocalPath) {
+        return res.status(400).json({ error: error.message });
       }
-      console.log(req.body);
+      const file_img = await uploadOnCloudinary(fileLocalPath);
 
-      const file = req.files.photo;
-      await cloudinary.uploader.upload(
-        file.tempFilePath,
-        async (err, result) => {
-          console.log(result);
-          // fs.unlink(result)
-          const bulk = new Bulk({
-            number,
-            message,
-            contact,
-            file: result.url,
-            user: req.user.id,
-          });
+      if (!file_img) {
+        return res.status(400).json({ error: "image is required" });
+      }
 
-          const saveBulk = await bulk.save();
-          res.json(saveBulk);
-        }
-      );
+      const { number, message, contact } = req.body;
+      console.log(message);
+
+      const createbulk = await Bulk.create({
+        number,
+        message,
+        contact,
+        file: file_img.url,
+        user: req.user.id,
+      });
+      console.log(createbulk);
+      res.status(200).json(createbulk);
     } catch (error) {
       console.error(error.message);
       res.status(500).send("internal server error");
