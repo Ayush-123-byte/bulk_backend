@@ -6,10 +6,6 @@ user:{
   ref:'user'
 },
 
-  number: {
-    type: Number,
-    required: true,
-  },
   message: {
     type: String, 
     required: true,

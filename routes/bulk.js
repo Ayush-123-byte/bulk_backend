@@ -22,10 +22,8 @@ router.post(
   fetchuser,
   upload.fields([{ name: "file", maxCount: 1 }]),
   [
-    body("number", "number expected of 5 digit").isLength({ min: 5 }),
     body("message", "invalid message").isLength({ min: 5 }),
     body("contact", "give right contact").isLength({ min: 5 }),
-    // body("file", "give right file").exists(),
   ],
   async (req, res) => {
     // if there are error , return Bad request and the errors
@@ -45,11 +43,10 @@ router.post(
         return res.status(400).json({ error: "image is required" });
       }
 
-      const { number, message, contact } = req.body;
+      const { message, contact } = req.body;
       console.log(message);
 
       const createbulk = await Bulk.create({
-        number,
         message,
         contact,
         file: file_img.url,
@@ -66,12 +63,10 @@ router.post(
 
 // update a bulk
 router.put("/updatebulk/:id", fetchuser, async (req, res) => {
-  const { number, message, contact, file } = req.body;
+  const { message, contact, file } = req.body;
   try {
     const newBulk = {};
-    if (number) {
-      newBulk.number = number;
-    }
+
     if (message) {
       newBulk.message = message;
     }
